@@ -60,12 +60,11 @@ class ArgumentParser(argparse.ArgumentParser):
         self.print_usage(sys.stderr)
         self.exit(3, _('%s: error: %s\n') % (self.prog, message))
 
-argparser = ArgumentParser(formatter_class=LCHelpFormatter, epilog=Epilog)
+argparser = ArgumentParser(epilog=Epilog)
 
 # build a config object for this check session
 config = linkcheck.configuration.Configuration()
 # default recursion level is 1
-config['recursionlevel'] = 1
 
 # Standard options
 group = argparser.add_argument_group(_("Standard nagios options"))
@@ -77,6 +76,11 @@ group.add_argument("-t", "--timeout", type=int, dest="timeout", metavar="NUMBER"
                  help=_(
 """Set the timeout for connection attempts in seconds. The default
 timeout is %d seconds.""") % config["timeout"])
+group.add_argument("-r", "--recursion-level", type=int,
+                 dest="recursionlevel", metavar="NUMBER",
+                 help=_(
+"""Check recursively all links up to given depth. A negative depth
+will enable infinite recursion. Default depth is infinite."""))
 
 # Checking options
 group = argparser.add_argument_group(_("Checking options"))
@@ -91,7 +95,11 @@ argparser.add_argument("url", nargs='+', metavar="FILE_OR_URL")
 # read and parse command line options and arguments
 args = argparser.parse_args()
 
-if args.version is not None:
+config['recursionlevel'] = 1
+if args.recursionlevel is not None:
+    config["recursionlevel"] = args.recursionlevel
+
+if args.version:
     print_version()
 if args.timeout is not None:
     if args.timeout > 0:
